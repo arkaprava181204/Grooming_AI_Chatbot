@@ -532,17 +532,14 @@
   const suggestions = document.getElementById('suggestions');
   const newChatBtn = document.getElementById('newChatBtn');
 
-  const botReplies = [
-    "Got it — tell me a bit more and I'll dig in.",
-    "That makes sense. Here's how I'd approach it: break it into smaller steps first.",
-    "I can help with that. Want the short version or the detailed one?",
-    "Noted. I'll keep that in mind as we go.",
-    "Good question — let's work through it together.",
-    "Here's a thought: start with the outcome you want, then work backwards."
-  ];
+  // Your FastAPI + ngrok endpoint from Google Colab
+  const API_URL = 'http://localhost:8000';
 
   function timeNow(){
-    return new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+    return new Date().toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit'
+    });
   }
 
   function scrollToBottom(){
@@ -604,22 +601,57 @@
     if(row) row.remove();
   }
 
-  function handleSend(text){
-    if(!text.trim()) return;
-    addMessage(text.trim(), 'user');
+  async function handleSend(text){
+    if(!text.trim() || sendBtn.disabled) return;
+
+    const userMessage = text.trim();
+
+    addMessage(userMessage, 'user');
+
     input.value = '';
     input.style.height = 'auto';
     sendBtn.disabled = true;
     suggestions.style.display = 'none';
 
     showTyping();
-    const delay = 700 + Math.random() * 900;
-    setTimeout(() => {
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: userMessage
+        })
+      });
+
+      if(!response.ok){
+        throw new Error(`API returned ${response.status}`);
+      }
+
+      const data = await response.json();
+
       removeTyping();
-      const reply = botReplies[Math.floor(Math.random() * botReplies.length)];
-      addMessage(reply, 'bot');
+
+      if(data.response){
+        addMessage(data.response, 'bot');
+      } else {
+        addMessage('Sorry, I received an empty response from the AI.', 'bot');
+      }
+
+    } catch(error) {
+      console.error('API Error:', error);
+      removeTyping();
+
+      addMessage(
+        'Sorry, I could not connect to the grooming AI. Please make sure your Google Colab API is running.',
+        'bot'
+      );
+    } finally {
       sendBtn.disabled = false;
-    }, delay);
+      input.focus();
+    }
   }
 
   form.addEventListener('submit', function(e){
@@ -647,7 +679,7 @@
 
   newChatBtn.addEventListener('click', function(){
     messages.innerHTML = '<div class="day-divider">Today</div>';
-    addMessage("Hi, I'm Semray. What can I help you think through today?", 'bot');
+    addMessage("Hi, I'm Semray. Ask me anything about grooming.", 'bot');
     suggestions.style.display = 'flex';
   });
 
