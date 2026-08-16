@@ -170,6 +170,9 @@
     display:flex;
     flex-direction:column;
     min-width:0;
+    min-height:0;
+    height:100%;
+    overflow:hidden;
   }
 
   .chat-header{
@@ -232,7 +235,9 @@
   /* messages */
   .messages{
     flex:1;
+    min-height:0;
     overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
     padding:26px 24px;
     display:flex;
     flex-direction:column;
@@ -470,8 +475,6 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
       New conversation
     </button>
-
-    </ul>
   </aside>
 
   <!-- Chat panel -->
